@@ -1,7 +1,13 @@
-### IntelliJ IDEA ###
+### Java / Gradle ###
+.gradle/
+build/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
 
 ### Eclipse ###
 .apt_generated
@@ -12,8 +18,6 @@ out/
 .springBeans
 .sts4-cache
 bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
 ### NetBeans ###
 /nbproject/private/
@@ -21,9 +25,19 @@ bin/
 /dist/
 /nbdist/
 /.nb-gradle/
+build/
 
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
+### 本地配置：面板密钥等敏感信息不要提交 ###
+src/main/resources/application-local.yml
+src/main/resources/application-local.properties
+
+### 系统 ###
 .DS_Store
+Thumbs.db
+
+### 日志 ###
+*.log
+logs/
