@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多功能游戏备份面板</title>
+  <style>
+    :root {
+      --bg: #0f1420;
+      --panel: #171e2e;
+      --panel-2: #1e2739;
+      --line: #2b364d;
+      --text: #e6ecf5;
+      --muted: #8d9bb5;
+      --accent: #4c8dff;
+      --accent-2: #2f6fe0;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --err: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 28px 20px 60px;
+      background: radial-gradient(1200px 600px at 15% -10%, #1b2740 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .5px; }
+    .sub { color: var(--muted); font-size: 13px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 18px;
+    }
+    .card h2 { font-size: 15px; margin: 0 0 14px; color: var(--muted); font-weight: 600; letter-spacing: .4px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .kv { display: grid; grid-template-columns: 96px 1fr; gap: 8px 14px; font-size: 14px; }
+    .kv .k { color: var(--muted); }
+    .kv .v { word-break: break-all; font-family: Consolas, monospace; }
+    button {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #fff;
+      background: var(--accent);
+      transition: background .15s, opacity .15s;
+    }
+    button:hover { background: var(--accent-2); }
+    button.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+    button.ghost:hover { background: var(--panel-2); border-color: var(--accent); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .badge {
+      display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--muted);
+    }
+    .badge.ok { color: #06281c; background: var(--ok); border-color: transparent; }
+    .badge.warn { color: #2b1d02; background: var(--warn); border-color: transparent; }
+    .badge.err { color: #2b0606; background: var(--err); border-color: transparent; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    td.mono { font-family: Consolas, monospace; font-size: 12.5px; color: var(--muted); }
+    .empty { color: var(--muted); font-size: 14px; padding: 10px 0; }
+    .toast {
+      margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 14px;
+      border: 1px solid var(--line); background: var(--panel-2); display: none; white-space: pre-wrap;
+    }
+    .toast.show { display: block; }
+    .toast.ok { border-color: var(--ok); }
+    .toast.err { border-color: var(--err); }
+    .toast.info { border-color: var(--accent); }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.7; margin-top: 6px; }
+    code { background: var(--panel-2); padding: 1px 6px; border-radius: 5px; font-family: Consolas, monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>多功能游戏备份面板</h1>
+      <div class="sub">通过翼龙面板 (Pterodactyl) API 管理游戏服务器备份</div>
+    </div>
+    <div class="row">
+      <span id="panelBadge" class="badge">读取中…</span>
+      <button id="btnRefresh" class="ghost">刷新列表</button>
+      <button id="btnBackup">立即备份</button>
+    </div>
+  </header>
+
+  <div id="toast" class="toast"></div>
+
+  <section class="card">
+    <h2>面板连接</h2>
+    <div class="kv">
+      <div class="k">面板地址</div><div class="v" id="cfgUrl">-</div>
+      <div class="k">服务器 ID</div><div class="v" id="cfgServer">-</div>
+      <div class="k">API Key</div><div class="v" id="cfgKey">-</div>
+    </div>
+    <div class="hint" id="cfgHint"></div>
+  </section>
+
+  <section class="card">
+    <h2>备份记录 <span id="count" class="badge"></span></h2>
+    <div id="listBox"><div class="empty">加载中…</div></div>
+  </section>
+
+  <section class="card">
+    <h2>接入说明</h2>
+    <div class="hint">
+      1. 打开 <code>src/main/resources/application.yml</code>，填写 <code>panel.url</code>、<code>panel.api-key</code>、<code>panel.server-id</code>，重启应用。<br>
+      2. API Key 在面板 <code>账户 → API Credentials</code> 生成，权限需包含备份相关读写。<br>
+      3. 服务器 ID 是面板中打开该服务器时地址里的 <code>/server/&lt;id&gt;</code> 那一段。
+    </div>
+  </section>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function toast(message, kind = 'info') {
+    const box = $('toast');
+    box.textContent = message;
+    box.className = 'toast show ' + kind;
+  }
+
+  function setBadge(text, kind) {
+    const badge = $('panelBadge');
+    badge.textContent = text;
+    badge.className = 'badge' + (kind ? ' ' + kind : '');
+  }
+
+  function setBusy(busy) {
+    $('btnBackup').disabled = busy;
+    $('btnRefresh').disabled = busy;
+  }
+
+  async function readJson(response) {
+    const text = await response.text();
+    try { return text ? JSON.parse(text) : {}; } catch { return { message: text }; }
+  }
+
+  async function loadStatus() {
+    try {
+      const res = await fetch('/api/panel/status');
+      const data = await readJson(res);
+      $('cfgUrl').textContent = data.url || '(未填写)';
+      $('cfgServer').textContent = data.serverId || '(未填写)';
+      $('cfgKey').textContent = data.apiKeyMasked || '(未填写)';
+      $('cfgHint').textContent = data.message || '';
+      setBadge(data.configured ? '已配置' : '未配置', data.configured ? 'ok' : 'warn');
+    } catch (e) {
+      setBadge('无法读取状态', 'err');
+      toast('读取面板状态失败：' + e.message, 'err');
+    }
+  }
+
+  function renderList(result) {
+    $('count').textContent = (result.total || 0) + ' 条';
+    const items = result.items || [];
+    if (!items.length) {
+      $('listBox').innerHTML = '<div class="empty">该服务器暂无备份记录。点右上角「立即备份」发起一次备份。</div>';
+      return;
+    }
+    const rows = items.map((it) => `
+      <tr>
+        <td>${it.name ?? '-'}</td>
+        <td>${it.sizeText ?? '-'}</td>
+        <td>${it.createdAt ?? '-'}</td>
+        <td>${it.successful ? '<span class="badge ok">已完成</span>' : '<span class="badge warn">进行中/失败</span>'}</td>
+        <td class="mono">${it.uuid ?? '-'}</td>
+      </tr>`).join('');
+    $('listBox').innerHTML = `
+      <table>
+        <thead>
+          <tr><th>备份名称</th><th>大小</th><th>创建时间</th><th>状态</th><th>UUID</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  async function loadBackups() {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/backups');
+      const data = await readJson(res);
+      if (!res.ok) {
+        $('listBox').innerHTML = '<div class="empty">读取失败</div>';
+        $('count').textContent = '';
+        toast(`读取备份列表失败 [${data.code || res.status}]：${data.message || ''}`, 'err');
+        return;
+      }
+      renderList(data);
+      toast('已刷新备份列表（共 ' + (data.total || 0) + ' 条）', 'ok');
+    } catch (e) {
+      toast('请求备份列表出错：' + e.message, 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createBackup() {
+    setBusy(true);
+    toast('正在请求面板创建备份…', 'info');
+    try {
+      const res = await fetch('/api/backups', { method: 'POST' });
+      const data = await readJson(res);
+      if (!res.ok) {
+        toast(`备份失败 [${data.code || res.status}]：${data.message || ''}`, 'err');
+        return;
+      }
+      toast(data.message || '备份请求已受理', 'ok');
+      setTimeout(loadBackups, 1500);
+    } catch (e) {
+      toast('发起备份出错：' + e.message, 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  $('btnRefresh').addEventListener('click', loadBackups);
+  $('btnBackup').addEventListener('click', createBackup);
+
+  loadStatus();
+  loadBackups();
+</script>
+</body>
+</html>

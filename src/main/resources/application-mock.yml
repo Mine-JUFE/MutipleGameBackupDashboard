@@ -1,0 +1,20 @@
+# ============================================================
+#  本地联调配置：把面板指向 devtools/mock-panel.js 假面板
+#  用途：不接真实翼龙面板也能跑通"列备份 + 触发备份"整条链路
+#  用法：
+#    1) node devtools/mock-panel.js           （另开一个终端）
+#    2) ./gradlew.bat bootRun --args='--spring.profiles.active=mock'
+# ============================================================
+server:
+  port: 8080
+
+panel:
+  url: "http://127.0.0.1:9099"
+  api-key: "ptlc_mock_key_for_local_test"
+  server-id: "mock-server-01"
+  connect-timeout-seconds: 5
+  read-timeout-seconds: 10
+
+logging:
+  level:
+    com.minejufe.backupdashboard: DEBUG

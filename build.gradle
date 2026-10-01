@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.16'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.minejufe'
+version = '0.1.0'
+description = '多功能游戏备份面板：通过翼龙面板(Pterodactyl) API 备份游戏服务器'
+
+// 本机 JDK 25；用本机 JDK 编译，产出 Java 21 兼容的字节码，避免 Gradle 去下载 toolchain
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    // 国内网络优先走阿里云镜像，失败再回落 Maven 中央仓库
+    maven { url = 'https://maven.aliyun.com/repository/public' }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('wrapper') {
+    gradleVersion = '9.2.1'
+    distributionType = Wrapper.DistributionType.BIN
+}

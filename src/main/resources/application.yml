@@ -1,0 +1,26 @@
+# ============================================================
+#  多功能游戏备份面板 —— 主配置
+#  把下面 panel.* 换成你自己的翼龙面板信息即可，改完重启应用生效
+# ============================================================
+server:
+  port: 8080
+
+panel:
+  # 翼龙面板根地址，不要带结尾斜杠，例如 https://panel.example.com
+  url: ""
+
+  # Client API Key：登录面板 -> 账户(Account) -> API Credentials -> 新建
+  # 权限建议至少勾选 Backups 相关的读写
+  api-key: ""
+
+  # 目标游戏服务器的短 ID：面板里打开该服务器，地址 /server/<这串就是ID>
+  server-id: ""
+
+  # 网络超时（秒）
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 30
+
+# 日志级别：调试面板交互时把下面这行放开，可以看到请求与响应细节
+logging:
+  level:
+    com.minejufe.backupdashboard: INFO
